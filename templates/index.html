@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Farmer Disaster Report Form</title>
+    <style>
+        :root {
+            --primary-color: #4a90e2;
+            --secondary-color: #f39c12;
+            --background-color: #f9f9f9;
+            --text-color: #333;
+            --input-background: #fff;
+            --input-border: #e0e0e0;
+            --input-focus: #3498db;
+            --submit-hover: #2980b9;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 0;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 32px;
+        }
+
+        #farmerForm {
+            display: grid;
+            gap: 20px;
+        }
+
+        .form-row {
+            display: grid;
+            gap: 20px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid var(--input-border);
+            border-radius: 8px;
+            font-size: 16px;
+            transition: border-color 0.3s ease, box-shadow 0.3s ease;
+            box-sizing: border-box;
+        }
+
+        input:focus, select:focus {
+            outline: none;
+            border-color: var(--input-focus);
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+
+        input[type="file"] {
+            padding: 10px;
+            background-color: #f5f5f5;
+        }
+
+        button {
+            width: 100%;
+            background: var(--primary-color);
+            color: white;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: 600;
+            transition: background-color 0.3s ease, transform 0.1s ease;
+        }
+
+        button:hover {
+            background: var(--submit-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Laptop and larger screens */
+        @media (min-width: 1024px) {
+            .form-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Tablet view */
+        @media (min-width: 768px) and (max-width: 1023px) {
+            .form-row {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        /* Mobile view */
+        @media (max-width: 767px) {
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+
+            h1 {
+                font-size: 24px;
+            }
+
+            input, select, button {
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Farmer Disaster Report Form</h1>
+    <form id="farmerForm" enctype="multipart/form-data">
+        <div class="form-row">
+            <div class="form-group">
+                <label for="farmerName">Farmer Name</label>
+                <input type="text" id="farmerName" name="farmerName" required>
+            </div>
+            <div class="form-group">
+                <label for="farmerId">Aadhar/Govt ID Number</label>
+                <input type="text" id="farmerId" name="farmerId" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="contactNumber">Contact Number</label>
+                <input type="tel" id="contactNumber" name="contactNumber" required>
+            </div>
+            <div class="form-group">
+                <label for="reason">Reason for Affected</label>
+                <select id="reason" name="reason" required>
+                    <option value="">Select Reason</option>
+                    <option value="flood">Flood</option>
+                    <option value="heavy rain">Heavy Rain</option>
+                    <option value="other">Other Disasters</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="farmLocation">Farm Location</label>
+                <input type="text" id="farmLocation" name="farmLocation" required>
+            </div>
+            <div class="form-group">
+                <label for="farmerLocation">Farmer Location</label>
+                <input type="text" id="farmerLocation" name="farmerLocation" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="plantGrowth">Amount of Growth of the Plant</label>
+                <input type="text" id="plantGrowth" name="plantGrowth" required>
+            </div>
+
+            <div class="form-group">
+                <label for="coordinates1">Coordinates of the Affected Farm (1)</label>
+                <input type="text" id="coordinates1" name="coordinates1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="coordinates2">Coordinates of the Affected Farm (2)</label>
+                <input type="text" id="coordinates2" name="coordinates2" required>
+            </div>
+
+            <div class="form-group">
+                <label for="coordinates3">Coordinates of the Affected Farm (3)</label>
+                <input type="text" id="coordinates3" name="coordinates3" required>
+            </div>
+
+            <div class="form-group">
+                <label for="coordinates4">Coordinates of the Affected Farm (4)</label>
+                <input type="text" id="coordinates4" name="coordinates4" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="farmDocument">Farm Document (PDF)</label>
+                <input type="file" id="farmDocument" name="farmDocument" accept=".pdf" required>
+            </div>
+            <div class="form-group">
+                <label for="surveyVideo">Survey Video</label>
+                <input type="file" id="surveyVideo" name="surveyVideo" accept="video/*" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label for="droneModel">Drone Model Used</label>
+                <select id="droneModel" name="droneModel" required>
+                    <option value="">Select Drone Model</option>
+                    <option value="DJI Drone">DJI Drone</option>
+                    <option value="Customized Drone">Customized Drone</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="droneNumber">Drone Number</label>
+                <input type="text" id="droneNumber" name="droneNumber" required>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="land_type">Select Land Type:</label>
+            </div>
+            <div class="form-group">
+                <label>
+                    <select name="land_type">
+                        <option value="rural">Rural</option>
+                        <option value="urban">Urban</option>
+                    </select>
+                </label>
+            </div >
+        </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label for="pilotName">Pilot Name</label>
+                    <select id="pilotName" name="pilotName" required>
+                        <option value="">Select Pilot Name</option>
+                        <option value="John Doe">John Doe</option>
+                        <option value="Alice Smith">Alice Smith</option>
+                        <option value="Raj Kumar">Raj Kumar</option>
+                        <option value="David Brown">David Brown</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit">Submit Report</button>
+    </form>
+</div>
+
+<script>
+    document.getElementById('farmerForm').addEventListener('submit', function (event) {
+        event.preventDefault();
+
+        // Get coordinates values and combine them into a single string
+        const coordinates1 = document.getElementById('coordinates1').value;
+        const coordinates2 = document.getElementById('coordinates2').value;
+        const coordinates3 = document.getElementById('coordinates3').value;
+        const coordinates4 = document.getElementById('coordinates4').value;
+
+        const coordinates = `${coordinates1},${coordinates2},${coordinates3},${coordinates4}`;
+
+        // Prepare form data to send including combined coordinates
+        const formData = new FormData(this);
+        formData.append('coordinates', coordinates); // Add the coordinates to form data
+
+        fetch('http://127.0.0.1:5000/generate_report', {  // Update the endpoint as needed
+            method: 'POST',
+            body: formData,  // FormData automatically sets the correct Content-Type
+        })
+            .then(response => response.json())
+            .then(data => {
+                alert('Form submitted successfully!');
+                console.log(data);
+            })
+            .catch(error => {
+                alert('Error submitting form');
+                console.error(error);
+            });
+    });
+</script>
+
+</body>
+</html>
