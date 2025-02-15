@@ -2,65 +2,80 @@ import logging
 import os
 import cv2
 import random
-from flask import Flask, request, jsonify, render_template, send_file
+from flask import Flask, request, jsonify, render_template, send_file, send_from_directory
 from roboflow import Roboflow
 from fpdf import FPDF
-import cv2
-import matplotlib.pyplot as plt
-
 import math
+# Configure logging
+logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
 
-def generate_confidence_graph(form_data, video_path, confidence_level):
-    # Extract damage reason from form data
-    reason = form_data.get("reason", "Other")
+app = Flask(__name__)
+UPLOAD_FOLDER = "uploads"
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
 
-    # Compute affected vs non-affected area percentages
-    affected_area = confidence_level * 100
-    non_affected_area = 100 - affected_area
+# Initialize Roboflow Model
+rf = Roboflow(api_key="iW1QmBy39feV54Qtr575")
+project = rf.workspace().project("banana-jtjak")
+model = project.version(1).model
 
-    # Load video and extract a frame
-    cap = cv2.VideoCapture(video_path)
-    ret, frame = cap.read()
-    cap.release()
-    if not ret:
-        print("Failed to extract a frame from video.")
-        return None
 
-    # Convert BGR to RGB for displaying in Matplotlib
-    frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+@app.route('/')
+def home():
+    return render_template('index.html')
 
-    # Create figure
-    fig, ax = plt.subplots(figsize=(8, 5))
+@app.route('/form')
+def form_page():
+    return render_template('form.html')
 
-    # Labels and values for affected vs non-affected
-    labels = ["Affected Area", "Non-Affected Area"]
-    values = [affected_area, non_affected_area]
-    colors = ["red", "green"]
+@app.route('/image_form')
+def image_form_page():
+    return render_template('image_form.html')
+@app.route("/uploads/<filename>")
+def serve_uploaded_image(filename):
+    return send_from_directory(IMAGE_UPLOAD_FOLDER, filename)
 
-    bars = ax.bar(labels, values, color=colors)
-    ax.set_title(f"Disaster Impact Analysis ({reason})", fontsize=14)
-    ax.set_ylabel("Percentage (%)", fontsize=12)
-    ax.set_ylim(0, 100)
 
-    # Add percentage labels on top of bars
-    for bar in bars:
-        yval = bar.get_height()
-        ax.text(bar.get_x() + bar.get_width()/2, yval + 2, f"{yval:.1f}%", ha='center', fontsize=12, fontweight='bold')
-    # Overlay extracted video frame in the background
-    fig.figimage(frame, xo=50, yo=50, alpha=0.4)  # Position at bottom-left with transparency
 
-    # Save graph
-    output_path = "static/confidence_graph.png"
-    plt.savefig(output_path)
-    plt.close()
+IMAGE_UPLOAD_FOLDER = os.path.join(UPLOAD_FOLDER, "images")
+os.makedirs(IMAGE_UPLOAD_FOLDER, exist_ok=True)
 
-    print(f" Graph saved at: {output_path}")
+@app.route("/predict_crops", methods=["POST"])
+def predict_crops():
+    try:
+        if "cropImages" not in request.files:
+            return jsonify({"error": "No files uploaded"}), 400
 
-    return output_path
+        files = request.files.getlist("cropImages")
+        predictions = []
+
+        for file in files:
+            filename = os.path.join(IMAGE_UPLOAD_FOLDER, file.filename)
+            file.save(filename)  # Save file to the images folder
+
+            # Run inference using Roboflow
+            prediction = model.predict(filename, confidence=40, overlap=30)
+
+            # Save the predicted image with annotations
+            predicted_filename = os.path.join(
+                IMAGE_UPLOAD_FOLDER, file.filename.replace(".jpg", "_predicted.jpg")
+            )
+            prediction.save(predicted_filename)
+
+            predictions.append({
+                "image": f"images/{file.filename}",  # Relative path for displaying
+                "predicted_image": f"images/{os.path.basename(predicted_filename)}",
+                "result": prediction.json()
+            })
+
+        # Render the results page with the original and predicted images
+        return render_template("result.html", predictions=predictions)
+
+    except Exception as e:
+        return render_template("result.html", error=f"An error occurred: {str(e)}")
 
 
 def calculate_area_acres(coordinates):
-    # ... (input validation remains the same)
 
     area_sq_meters = 0.0
     num_points = len(coordinates)
@@ -79,25 +94,10 @@ def calculate_area_acres(coordinates):
     print(acres)
     return acres
 
-
-# Configure logging
-logging.basicConfig(level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s")
-
-app = Flask(__name__)
-UPLOAD_FOLDER = "uploads"
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-app.config["UPLOAD_FOLDER"] = UPLOAD_FOLDER
-
-# Initialize Roboflow Model
-rf = Roboflow(api_key="iW1QmBy39feV54Qtr575")
-project = rf.workspace().project("banana-jtjak")
-model = project.version(1).model
-
-
 class PDFReport(FPDF):
     def header(self):
-        self.set_font("Arial", style="B", size=14)
-        self.cell(200, 10, "Farmer Disaster Report", ln=True, align='C')
+        self.set_font("Arial", style="B", size=12)
+        self.cell(200, 10, "Farmer Disaster Report", ln=True, align="C")
         self.ln(10)
 
     def add_section(self, title, text):
@@ -113,25 +113,6 @@ class PDFReport(FPDF):
 
         # Space after the row
         self.ln(5)
-
-        logging.debug(f"Added section: {title} - {text}")
-
-    def add_image_section(self, img_path):
-        self.set_font("Arial", "B", 12)
-        self.cell(200, 10, "Survey Image & Prediction", ln=True, align="C")
-        self.ln(5)
-        # Add original image and prediction
-        self.image(img_path, x=30, w=80)
-        self.ln(5)
-        self.ln(5)
-    def add_image_graph(self, img_path):
-        self.set_font("Arial", "B", 12)
-        self.cell(200, 10, "Graph", ln=True, align="C")
-        self.ln(5)
-        self.image(img_path, x=30, w=80)
-        self.ln(5)
-        self.ln(5)
-
 
 
 def extract_frames(video_path, output_folder, num_frames=3):
@@ -150,7 +131,7 @@ def extract_frames(video_path, output_folder, num_frames=3):
         cap.set(cv2.CAP_PROP_POS_FRAMES, frame_no)
         ret, frame = cap.read()
         if ret:
-            img_path = os.path.join(output_folder, f"frame_{i + 1}.jpg")
+            img_path = os.path.join(output_folder, f"frame_{i+1}.jpg")
             cv2.imwrite(img_path, frame)
             extracted_images.append(img_path)
 
@@ -159,6 +140,7 @@ def extract_frames(video_path, output_folder, num_frames=3):
 
 
 def run_inference(images):
+    """Runs inference on extracted frames using Roboflow."""
     prediction_images = []
     results = []
 
@@ -166,10 +148,11 @@ def run_inference(images):
         prediction = model.predict(img, confidence=40, overlap=30)
         prediction_img = img.replace(".jpg", "_prediction.jpg")
         model.predict(img, confidence=40, overlap=30).save(prediction_img)
+
         results.append((img, prediction.json()))
         prediction_images.append(prediction_img)
 
-        return results, prediction_images
+    return results, prediction_images
 
 
 @app.route("/")
@@ -216,22 +199,14 @@ def generate_report():
         if survey_video:
             survey_video_path = os.path.join(UPLOAD_FOLDER, "survey_video.mp4")
             survey_video.save(survey_video_path)
+
+            # Extract frames and run inference
             extracted_frames = extract_frames(survey_video_path, UPLOAD_FOLDER, num_frames=3)
             if extracted_frames:
                 results, prediction_images = run_inference(extracted_frames)
             else:
                 results, prediction_images = [], []
-
         area = calculate_area_acres(coordinates)
-        #Generating Grph
-        form_data = {
-            "reason": land_type
-        }
-        video_path = "uploads/survey_video.mp4"  # Path to uploaded video
-
-        graph_path = generate_confidence_graph(form_data, video_path, .75)
-        if graph_path:
-            print(f"Graph generated successfully: {graph_path}")
         # Generate PDF
         pdf = PDFReport()
         pdf.add_page()
@@ -242,23 +217,39 @@ def generate_report():
         pdf.add_section("Farm Location:", farm_location)
         pdf.add_section("Farmer Location:", farmer_location)
         pdf.add_section("Growth of the Plant:", plant_growth)
-
         rate_per_acre = 5000 if land_type.lower() == "rural" else 4500
         compensation_amount = area * rate_per_acre
         pdf.add_section("Compensation Amount:", f"{compensation_amount:,.2f}")
         pdf.add_section("Affected Area (in acres):", f"{float(area):.2f}")
+
         pdf.add_section("Drone Model Used:", drone_model)
         pdf.add_section("Drone Number:", drone_number)
         pdf.add_section("Pilot Name:", pilot_name)
-        # # Add survey images and predictions to the PDF
 
+        # Add survey images and predictions to the PDF
         if results:
+            pdf.set_font("Arial", "B", 12)
+            pdf.cell(200, 10, "Survey Images & Predictions", ln=True, align="C")
+            pdf.ln(5)
+
             for i, (original_img, prediction) in enumerate(results):
-                pdf.add_image_section(original_img)
-        pdf_filename = os.path.join(UPLOAD_FOLDER, f"report_{farmer_id+"_Report"}.pdf")
+                pdf.set_font("Arial", "B", 10)
+                pdf.cell(200, 10, f"Image {i+1} Analysis", ln=True, align="L")
+
+                # Add images
+                pdf.image(original_img, x=30, w=80)
+                pdf.ln(5)
+                pdf.image(prediction_images[i], x=30, w=80)
+                pdf.ln(3)
+
+                # Add prediction data
+                pdf.set_font("Arial", "", 10)
+                pdf.multi_cell(0, 5, f"Prediction Results: {prediction}")
+                pdf.ln(5)
+
+        pdf_filename = os.path.join(UPLOAD_FOLDER, f"report_{farmer_id}.pdf")
         pdf.output(pdf_filename)
-        pdf.add_image_section(graph_path)
-        print("Added")
+
         return jsonify({"message": "PDF Report Generated", "file": pdf_filename})
 
     except Exception as e:
@@ -278,6 +269,3 @@ def download_report(farmer_id):
 
 if __name__ == "__main__":
     app.run(debug=True)
-
-
-

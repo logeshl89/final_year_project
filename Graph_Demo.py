@@ -56,7 +56,7 @@ def generate_confidence_graph(form_data, video_path, confidence_level):
         yval = bar.get_height()
         ax.text(bar.get_x() + bar.get_width()/2, yval + 2, f"{yval:.1f}%", ha='center', fontsize=12, fontweight='bold')
     # Overlay extracted video frame in the background
-    fig.figimage(frame, xo=50, yo=50, alpha=0.4)  # Position at bottom-left with transparency
+      # Position at bottom-left with transparency
 
     # Save graph
     output_path = "static/confidence_graph.png"
