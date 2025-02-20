@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Damage Prediction - Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+        #results {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            width: 80%;
+            text-align: left;
+        }
+        .error {
+            color: red;
+        }
+        hr {
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Prediction Results</h1>
+
+    <div id="results">
+        {% if error %}
+            <p class="error">{{ error }}</p>
+        {% elif predictions %}
+            {% for pred in predictions %}
+                <p><strong>Image:</strong> {{ pred.image }}</p>
+<!--?<img src="{{ url_for('serve_uploaded_image', filename=pred.image) }}" width="300" alt="Original Image">-->
+<!--?<img src="{{ url_for('serve_uploaded_image', filename=pred.predicted_image) }}" width="300" alt="Predicted Image">-->
+
+                {% if pred.result and pred.result.predictions %}
+                    <h3>Detected Objects:</h3>
+                    {% for item in pred.result.predictions %}
+                        <p><strong>Class:</strong> {{ item.class }}</p>
+                        <p><strong>Class ID:</strong> {{ item.class_id }}</p>
+                        <p><strong>Confidence:</strong> {{ (item.confidence * 100)|round(2) }}%</p>
+                        <p><strong>Detection ID:</strong> {{ item.detection_id }}</p>
+                        <p><strong>Prediction Type:</strong> {{ item.prediction_type }}</p>
+                        <p><strong>Bounding Box:</strong></p>
+                        <ul>
+                            <li><strong>X:</strong> {{ item.x }}</li>
+                            <li><strong>Y:</strong> {{ item.y }}</li>
+                            <li><strong>Width:</strong> {{ item.width }}</li>
+                            <li><strong>Height:</strong> {{ item.height }}</li>
+                        </ul>
+                        <hr>
+                    {% endfor %}
+                {% else %}
+                    <p class="error">No predictions found.</p>
+                {% endif %}
+            {% endfor %}
+        {% endif %}
+    </div>
+
+    <br>
+    <a href="/">Upload Another Image</a>
+
+</body>
+</html>

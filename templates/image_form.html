@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crop Damage Prediction</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 20px;
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, button {
+            margin-top: 10px;
+            padding: 8px;
+            font-size: 16px;
+        }
+        #predictionResults {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            display: inline-block;
+            width: 80%;
+            text-align: left;
+        }
+        .error {
+            color: red;
+        }
+        .result-container {
+            border-bottom: 1px solid #ddd;
+            padding: 10px;
+        }
+        img {
+            margin-top: 10px;
+            border-radius: 5px;
+            box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <h1>Crop Damage Prediction</h1>
+
+    <form id="cropForm" action="/predict_crops" method="POST" enctype="multipart/form-data">
+        <label for="cropImages">Upload Crop Images:</label>
+        <input type="file" name="cropImages" id="cropImages" multiple required>
+        <br>
+        <button type="submit">Analyze Crops</button>
+    </form>
+
+    <div id="predictionResults">
+        <h2>Results</h2>
+    </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    document.getElementById("cropForm").addEventListener("submit", function (event) {
+        event.preventDefault(); // ✅ Prevents form from reloading
+
+        console.log("✅ Form submitted! JavaScript is working."); // Debugging log
+
+        let formData = new FormData(this);
+        let outputDiv = document.getElementById("predictionResults");
+
+        // ✅ Show loading message
+        outputDiv.innerHTML = "<p>⏳ Processing... Please wait.</p>";
+
+        fetch("/predict_crops", {
+            method: "POST",
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log("📩 API Response:", data); // ✅ Debugging output
+
+            outputDiv.innerHTML = "<h2>Results</h2>";
+
+            if (data.predictions) {
+                data.predictions.forEach(pred => {
+                    let imagePath = pred.result.predictions[0].image_path.replace(/\\/g, "/"); // Fix backslashes
+
+                    outputDiv.innerHTML += `
+                        <p><strong>Image:</strong> ${pred.image}</p>
+                        <img src="/${imagePath}" width="300" alt="Analyzed Image"><br>
+                        <p><strong>Detected Class:</strong> ${pred.result.predictions[0].class}</p>
+                        <p><strong>Confidence:</strong> ${(pred.result.predictions[0].confidence * 100).toFixed(2)}%</p>
+                        <p><strong>Bounding Box:</strong> X: ${pred.result.predictions[0].x}, Y: ${pred.result.predictions[0].y},
+                            Width: ${pred.result.predictions[0].width}, Height: ${pred.result.predictions[0].height}
+                        </p>
+                        <hr>
+                    `;
+                });
+            } else {
+                outputDiv.innerHTML = `<p class="error">❌ Error: ${data.error}</p>`;
+            }
+        })
+        .catch(error => {
+            console.error("❌ Fetch Error:", error);
+            outputDiv.innerHTML = `<p class="error">An error occurred. Please try again.</p>`;
+        });
+    });
+});
+
+</script>
+
+</body>
+</html>
